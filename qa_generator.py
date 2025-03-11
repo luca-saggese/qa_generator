@@ -3,7 +3,7 @@ from transformers import pipeline
 
 # Carica i modelli di Hugging Face per la generazione di domande e risposte
 qg_pipeline = pipeline("text2text-generation", model="vocabtrimmer/mbart-large-cc25-itquad-qg-trimmed-it")
-qa_pipeline = pipeline("question-answering", model="research-backup/mbart-large-cc25-itquad-ae")
+qa_pipeline = pipeline("question-answering", model="mistralai/Mistral-7B")
 
 # Carica il file JSON con gli articoli del Codice Civile
 input_file = "codice-civile.json"  # Modifica con il nome del tuo file
@@ -61,6 +61,7 @@ for articolo in articoli:
                 # Salva nel dataset
                 dataset_domande_risposte.append({
                     "articolo": articolo_id,
+                    "test": testo,
                     "domanda": domanda_text,
                     "risposta": risposta.get("answer", "N/A")
                 })
