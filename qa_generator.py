@@ -2,11 +2,11 @@ import json
 from transformers import pipeline
 
 # Carica i modelli di Hugging Face per la generazione di domande e risposte
-qg_pipeline = pipeline("text2text-generation", model="lmqg/t5-large-itquad-qg")
-qa_pipeline = pipeline("question-answering", model="deepset/roberta-base-squad2")
+qg_pipeline = pipeline("text2text-generation", model="vocabtrimmer/mbart-large-cc25-itquad-qg-trimmed-it")
+qa_pipeline = pipeline("question-answering", model="research-backup/mbart-large-cc25-itquad-ae")
 
 # Carica il file JSON con gli articoli del Codice Civile
-input_file = "codice_civile.json"  # Modifica con il nome del tuo file
+input_file = "codice-civile.json"  # Modifica con il nome del tuo file
 output_file = "domande_risposte_codice_civile.json"
 
 with open(input_file, "r", encoding="utf-8") as f:
