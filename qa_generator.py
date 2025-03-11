@@ -12,11 +12,26 @@ output_file = "domande_risposte_codice_civile.json"
 with open(input_file, "r", encoding="utf-8") as f:
     articoli = json.load(f)
 
-# Verifica la struttura dei dati
 print(f"📜 Numero totale di articoli: {len(articoli)}")
 
-# Assumi che il JSON abbia una struttura come questa:
-# {"articolo": "Art. 2043", "testo": "Risarcimento per fatto illecito: qualsiasi danno ingiusto deve essere risarcito."}
+# Funzione per dividere il testo in blocchi di massimo 512 token
+def split_text(text, max_tokens=1024):
+    words = text.split()
+    chunks = []
+    current_chunk = []
+
+    for word in words:
+        current_chunk.append(word)
+        # Controlla la lunghezza in token
+        if len(qg_pipeline.tokenizer.encode(" ".join(current_chunk), add_special_tokens=False)) > max_tokens:
+            current_chunk.pop()
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [word]
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
 
 dataset_domande_risposte = []
 
@@ -30,21 +45,25 @@ for articolo in articoli:
     print(f"📝 Generazione per {articolo_id}...")
 
     try:
-        # Genera 4 domande basate sul testo dell'articolo
-        domande = qg_pipeline(testo, max_length=100, num_return_sequences=4)
+        # Dividi il testo in blocchi se troppo lungo
+        text_chunks = split_text(testo, max_tokens=1024)
 
-        for domanda in domande:
-            domanda_text = domanda["generated_text"]
+        for chunk in text_chunks:
+            # Genera 4 domande per ogni parte del testo
+            domande = qg_pipeline(chunk, max_length=100, num_return_sequences=4)
 
-            # Usa il modello di QA per estrarre la risposta dal testo
-            risposta = qa_pipeline(question=domanda_text, context=testo)
+            for domanda in domande:
+                domanda_text = domanda["generated_text"]
 
-            # Salva nel dataset
-            dataset_domande_risposte.append({
-                "articolo": articolo_id,
-                "domanda": domanda_text,
-                "risposta": risposta.get("answer", "N/A")
-            })
+                # Usa il modello di QA per estrarre la risposta dalla parte di testo corrispondente
+                risposta = qa_pipeline(question=domanda_text, context=chunk)
+
+                # Salva nel dataset
+                dataset_domande_risposte.append({
+                    "articolo": articolo_id,
+                    "domanda": domanda_text,
+                    "risposta": risposta.get("answer", "N/A")
+                })
 
     except Exception as e:
         print(f"⚠️ Errore con {articolo_id}: {e}")
@@ -55,4 +74,3 @@ with open(output_file, "w", encoding="utf-8") as f:
     json.dump(dataset_domande_risposte, f, indent=4, ensure_ascii=False)
 
 print(f"✅ Dataset salvato in {output_file}")
-
